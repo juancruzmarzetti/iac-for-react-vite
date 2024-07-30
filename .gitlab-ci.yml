@@ -1,0 +1,79 @@
+stages:
+  - install
+  - build
+  - deploy
+  - destroy
+
+variables:
+  TF_ROOT: terraform
+  TF_STATE_NAME: default
+  TF_IMAGE: "$CI_TEMPLATE_REGISTRY_HOST/gitlab-org/terraform-images/releases/1.4:v1.0.0"
+  NODE_IMAGE: node:18.12.1
+  SECURE_FILES_DOWNLOAD_PATH: "./terraform"
+
+install:
+  stage: install
+  image: ${NODE_IMAGE}
+  script:
+    - npm install
+  cache:
+    untracked: true
+    paths:
+      - node_modules/
+      - terraform/
+    policy: pull-push
+
+build:
+  stage: build
+  image: ${NODE_IMAGE}
+  script:
+    - npm run build
+  cache:
+    untracked: true
+    paths:
+      - dist/
+    policy: pull
+  artifacts:
+    untracked: false
+    when: on_success
+    expire_in: "5 days"
+    paths:
+      - dist/
+
+deploy:
+  stage: deploy
+  dependencies:
+    - build
+  image: ${TF_IMAGE}
+  before_script:
+    - curl -s https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer | sh
+    - cd ${TF_ROOT}
+  script:
+    - ls
+    - gitlab-terraform init
+    - gitlab-terraform validate
+    - gitlab-terraform plan
+    - gitlab-terraform plan-json
+    - gitlab-terraform apply
+  resource_group: ${TF_STATE_NAME}
+  cache:
+    untracked: true
+    paths:
+      - terraform/
+  only:
+    - master
+
+destroy:
+  stage: destroy
+  dependencies:
+    - build
+  image: ${TF_IMAGE}
+  when: manual
+  before_script:
+    - curl -s https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer | sh
+    - cd ${TF_ROOT}
+  script:
+    - gitlab-terraform destroy
+  resource_group: ${TF_STATE_NAME}
+  only:
+    - master
