@@ -49,12 +49,15 @@ deploy:
     - curl -s https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer | sh
     - cd ${TF_ROOT}
   script:
+    - echo "$JUANKEYS" > juankeys.pem
+    - chmod 600 juankeys.pem
     - ls
     - gitlab-terraform init
     - gitlab-terraform validate
     - gitlab-terraform plan
     - gitlab-terraform plan-json
     - gitlab-terraform apply
+    - rm juankeys.pem
   resource_group: ${TF_STATE_NAME}
   cache:
     untracked: true
@@ -73,7 +76,10 @@ destroy:
     - curl -s https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer | sh
     - cd ${TF_ROOT}
   script:
+    - echo "$JUANKEYS" > juankeys.pem
+    - chmod 600 juankeys.pem
     - gitlab-terraform destroy
+    - rm juankeys.pem
   resource_group: ${TF_STATE_NAME}
   only:
     - master
