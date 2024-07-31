@@ -25,30 +25,30 @@ Después de esto, siempre que se haga un commit, se ejecutará el pipeline, que 
 
 ### English: 
 
-Para implementar la infraestructura como código (IaC) para un proyecto de React + Vite utilizando Terraform y GitLab CI/CD, sigue los pasos detallados a continuación. Esto incluye la configuración de las variables de CI/CD, la personalización de archivos Terraform, y el ajuste del pipeline de GitLab.
+To implement Infrastructure as Code (IaC) for a React + Vite project using Terraform and GitLab CI/CD, follow the detailed steps below. This includes setting up CI/CD variables, customizing Terraform files, and adjusting the GitLab pipeline.
 
-### 1. Crear un Repositorio en GitLab
-Crea un repositorio en tu cuenta de GitLab donde alojarás tu proyecto de React + Vite y los archivos de configuración de IaC.
+### 1. Create a Repository on GitLab
+Create a repository in your GitLab account to host your React + Vite project and the IaC configuration files.
 
-### 2. Configurar Variables de CI/CD en GitLab
-Ve a las configuraciones de tu repositorio en GitLab y agrega las siguientes variables en la sección CI/CD:
+### 2. Set Up CI/CD Variables in GitLab
+Go to your GitLab repository settings and add the following variables in the CI/CD section:
 
-- **AWS_ACCESS_KEY_ID**: Tu clave de acceso IAM de AWS.
-- **AWS_SECRET_ACCESS_KEY**: Tu clave secreta IAM de AWS.
-- **JUANKEYS**: Este nombre puede cambiarse según tus preferencias, pero debe coincidir con lo que se use en los scripts de GitLab CI/CD. Esta variable contiene el valor de un par de claves de AWS que usarás para acceder a tu instancia EC2.
-- **TF_API_TOKEN**: Un token de acceso personal de GitLab con permisos "api" y "read_repository". Se puede generar en `User Settings > Access Tokens`.
+- **AWS_ACCESS_KEY_ID**: Your AWS IAM access key.
+- **AWS_SECRET_ACCESS_KEY**: Your AWS IAM secret key.
+- **JUANKEYS**: This name can be changed according to your preferences, but it must match what is used in the GitLab CI/CD scripts. This variable contains the value of an AWS key pair that you will use to access your EC2 instance.
+- **TF_API_TOKEN**: A personal access token from GitLab with "api" and "read_repository" permissions. It can be generated in `User Settings > Access Tokens`.
 
-### 3. Personalizar Archivos de Terraform
-#### Archivo `main.tf`
-En este archivo, debes personalizar varios valores:
+### 3. Customize Terraform Files
+#### `main.tf` File
+In this file, you need to customize several values:
 
-- **subnet_id**: Especifica el ID de una subnet existente en AWS que esté asociada a una VPC existente.
-- **key_name**: Especifica el nombre de tu par de claves de AWS.
-- **connection**: Cambia `private_key = file("./juankeys.pem")` por el nombre de tu archivo de claves, por ejemplo, `private_key = file("./miarchivo.pem")`.
-- **Security Group**: Reemplaza el ID de la VPC con una VPC existente en AWS que esté asociada a la subnet especificada.
+- **subnet_id**: Specify the ID of an existing subnet in AWS associated with an existing VPC.
+- **key_name**: Specify the name of your AWS key pair.
+- **connection**: Change `private_key = file("./juankeys.pem")` to the name of your key file, for example, `private_key = file("./mykey.pem")`.
+- **Security Group**: Replace the VPC ID with an existing VPC in AWS associated with the specified subnet.
 
-#### Archivo `provider.tf`
-Modifica las direcciones del backend para que correspondan al ID de tu proyecto de GitLab. Puedes encontrar tu Project ID en `Repositorio de GitLab > Settings > General > Project ID`. Reemplaza en los campos `address`, `lock_address`, y `unlock_address` con la URL correspondiente a tu ID de proyecto, por ejemplo:
+#### `provider.tf` File
+Modify the backend addresses to match your GitLab project ID. You can find your Project ID in `GitLab Repository > Settings > General > Project ID`. Replace the fields `address`, `lock_address`, and `unlock_address` with the URL corresponding to your project ID, for example:
 ```hcl
 backend "http" {
   address        = "https://gitlab.com/api/v4/projects/ProjectID/terraform/state"
@@ -57,18 +57,18 @@ backend "http" {
 }
 ```
 
-### 4. Personalizar el Pipeline de GitLab CI/CD
-En el archivo `.gitlab-ci.yml`, debes hacer las siguientes modificaciones:
+### 4. Customize the GitLab CI/CD Pipeline
+In the `.gitlab-ci.yml` file, make the following changes:
 
-- En los stages `deploy` y `destroy`, reemplaza todas las referencias a "juankeys.pem" con el nombre de tu archivo de claves, por ejemplo, "miarchivo.pem".
-- También, asegúrate de que cuando se mencione la variable de entorno `$JUANKEYS`, esta coincida con el nombre de la variable que configuraste en GitLab.
+- In the `deploy` and `destroy` stages, replace all references to "juankeys.pem" with the name of your key file, for example, "mykey.pem".
+- Also, ensure that when the environment variable `$JUANKEYS` is mentioned, it matches the name of the variable you set in GitLab.
 
-### 5. Ejecutar el Pipeline
-Cada vez que hagas un commit, el pipeline de GitLab se ejecutará automáticamente, creando la infraestructura de AWS con Terraform. El stage `destroy` es manual, y se recomienda ejecutarlo antes de realizar un nuevo commit para evitar conflictos.
+### 5. Run the Pipeline
+Every time you commit, the GitLab pipeline will automatically run, creating the AWS infrastructure with Terraform. The `destroy` stage is manual, and it is recommended to execute it before pushing a new commit to avoid conflicts.
 
-### 6. Acceder a la Instancia EC2
-Una vez que el stage de `deploy` se ejecute correctamente, podrás acceder a tu aplicación React + Vite en la instancia EC2 a través de su dirección DNS pública. Esta dirección se puede encontrar en los detalles de la instancia en la consola de EC2 de AWS.
+### 6. Access the EC2 Instance
+Once the `deploy` stage runs successfully, you can access your React + Vite application on the EC2 instance through its public DNS address. This address can be found in the instance details in the AWS EC2 console.
 
-Ejemplo de una dirección DNS pública: `ec2-54-91-21-6.compute-1.amazonaws.com`.
+Example of a public DNS address: `ec2-54-91-21-6.compute-1.amazonaws.com`.
 
-¡Con estos pasos, deberías poder configurar y desplegar tu aplicación de React + Vite usando Terraform y GitLab CI/CD!
+Following these steps should enable you to set up and deploy your React + Vite application using Terraform and GitLab CI/CD!
